@@ -113,20 +113,24 @@ public class Result<T, E extends Throwable> {
     }
 
     /**
-     *
-     * @param consumer handle exception in functional way
+     * @param function handle exception in functional way
      * @return
      */
-    public Result<T, E> except(java.util.function.Consumer<E> consumer) {
+    public <V extends Throwable> Result<T, V> handle(Function<E, V> function) {
         if (error != null) {
-            consumer.accept(error);
-            return this;
+            return new Result<>(null, function.apply(error), cleaners);
         }
-        return this;
+        return new Result<>(data, null, cleaners);
+    }
+
+    public Result<T, E> except(java.util.function.Consumer<E> consumer) {
+        return handle((e) -> {
+            consumer.accept(e);
+            return e;
+        });
     }
 
     /**
-     *
      * @param consumer the clean up method of resource
      * @return
      */
@@ -136,7 +140,6 @@ public class Result<T, E extends Throwable> {
     }
 
     /**
-     *
      * @return invoke onClean function of every resource
      */
     public Result<T, E> cleanUp() {
@@ -151,7 +154,6 @@ public class Result<T, E extends Throwable> {
     }
 
     /**
-     *
      * @param data complement value
      * @return data when error occurs
      */
@@ -163,7 +165,6 @@ public class Result<T, E extends Throwable> {
     }
 
     /**
-     *
      * @param supplier provide the complement value
      * @return supplied value when error occurs
      */
@@ -175,7 +176,6 @@ public class Result<T, E extends Throwable> {
     }
 
     /**
-     *
      * @return wrapped value
      * @throws E when error occurs
      */
@@ -187,7 +187,6 @@ public class Result<T, E extends Throwable> {
     }
 
     /**
-     *
      * @param handler handle exception when exception occurs
      * @param <V>
      * @return the wrapped value
@@ -201,7 +200,6 @@ public class Result<T, E extends Throwable> {
     }
 
     /**
-     *
      * @return returns when no exception occurs and no null value returns
      */
     public boolean isPresent() {
