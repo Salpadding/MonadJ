@@ -2,8 +2,6 @@ package com.salpadding.exceptional;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
