@@ -112,7 +112,12 @@ public class Result<T, E extends Throwable> {
         }
     }
 
-    public Result<T, E> except(java.util.function.Consumer<Throwable> consumer) {
+    /**
+     *
+     * @param consumer handle exception in functional way
+     * @return
+     */
+    public Result<T, E> except(java.util.function.Consumer<E> consumer) {
         if (error != null) {
             consumer.accept(error);
             return this;
@@ -120,11 +125,20 @@ public class Result<T, E extends Throwable> {
         return this;
     }
 
+    /**
+     *
+     * @param consumer the clean up method of resource
+     * @return
+     */
     public Result<T, E> onClean(Consumer<T, ? extends Throwable> consumer) {
         this.cleaners.add(() -> consumer.consume(data));
         return this;
     }
 
+    /**
+     *
+     * @return invoke onClean function of every resource
+     */
     public Result<T, E> cleanUp() {
         this.cleaners.forEach(p -> {
             try {
@@ -136,6 +150,11 @@ public class Result<T, E extends Throwable> {
         return this;
     }
 
+    /**
+     *
+     * @param data complement value
+     * @return data when error occurs
+     */
     public T orElse(T data) {
         if (error != null) {
             return data;
@@ -143,6 +162,11 @@ public class Result<T, E extends Throwable> {
         return this.data;
     }
 
+    /**
+     *
+     * @param supplier provide the complement value
+     * @return supplied value when error occurs
+     */
     public T orElseGet(java.util.function.Supplier<T> supplier) {
         if (error != null) {
             return supplier.get();
@@ -150,6 +174,11 @@ public class Result<T, E extends Throwable> {
         return data;
     }
 
+    /**
+     *
+     * @return wrapped value
+     * @throws E when error occurs
+     */
     public T get() throws E {
         if (error != null) {
             throw error;
@@ -157,6 +186,13 @@ public class Result<T, E extends Throwable> {
         return data;
     }
 
+    /**
+     *
+     * @param handler handle exception when exception occurs
+     * @param <V>
+     * @return the wrapped value
+     * @throws V
+     */
     public <V extends Throwable> T get(Function<Throwable, V> handler) throws V {
         if (error != null) {
             throw handler.apply(error);
@@ -164,6 +200,10 @@ public class Result<T, E extends Throwable> {
         return data;
     }
 
+    /**
+     *
+     * @return returns when no exception occurs and no null value returns
+     */
     public boolean isPresent() {
         return error == null;
     }
