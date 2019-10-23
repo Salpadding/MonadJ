@@ -24,7 +24,7 @@ public class Bar{
                 .build();
 
         Result<CloseableHttpClient> client = Result
-                .completedResult(httpclient)
+                .of(httpclient)
                 .onClean(Closeable::close);
 
         Result.supply(() -> new URI(url))

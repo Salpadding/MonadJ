@@ -2,6 +2,7 @@ package com.salpadding.exceptional;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.function.Function;
 
 /**
@@ -12,7 +13,7 @@ public class Result<T> {
     private Throwable error;
     private List<Procedure> procedures;
 
-    public Result(T data, Throwable error) {
+    private Result(T data, Throwable error) {
         this.data = data;
         this.error = error;
         this.procedures = new LinkedList<>();
@@ -24,40 +25,24 @@ public class Result<T> {
         this.procedures = procedures;
     }
 
-    public T getData() {
-        return data;
-    }
-
-    public Throwable getError() {
-        return error;
-    }
-
     /**
      *
      * @param data completed result, not Nullable
      * @param <U> any type
      * @return data wrapper
      */
-    public static <U> Result<U> completedResult(U data) {
+    public static <U> Result<U> of(U data) {
         if (data == null){
             return new Result<>(null, new NullPointerException());
         }
         return new Result<>(data, null);
     }
 
-    /**
-     * @param t error message
-     * @return rejected result contains throuble
-     */
-    public static Result<?> rejectedResult(Throwable t){
-        return new Result<>(null, t);
-    }
-
     public static <U> Result<U> supply(Supplier<U, ? extends Throwable> supplier){
         try{
-            return new Result<>(supplier.get(), null, new LinkedList<>());
+            return new Result<>(supplier.get(), null);
         }catch (Throwable e){
-            return new Result<>(null, e, new LinkedList<>());
+            return new Result<>(null, e);
         }
     }
 
@@ -95,14 +80,6 @@ public class Result<T> {
         return res;
     }
 
-    public <R> Result<R> handle(Handler<T, Throwable, R, ? extends Throwable> function){
-        try{
-            return new Result<>(function.handle(data, error), null, procedures);
-        }catch (Throwable t){
-            return new Result<>(null, t, procedures);
-        }
-    }
-
     public Result<T> except(java.util.function.Consumer<Throwable> consumer){
         if (error != null){
             consumer.accept(error);
@@ -123,12 +100,16 @@ public class Result<T> {
             } catch (Throwable ignored) {
             }
         });
+        this.procedures = new LinkedList<>();
         return this;
     }
 
-    public Result<T> orElse(T data){
+    public Result<T> orElse(T data) throws RuntimeException{
+        if (data == null){
+            throw new NoSuchElementException("orElse require non null element");
+        }
         if (error != null){
-            return completedResult(data);
+            return new Result<>(data, null, procedures);
         }
         return this;
     }
@@ -137,7 +118,7 @@ public class Result<T> {
         if (error != null){
             return data;
         }
-        return data;
+        return this.data;
     }
 
     public T get() throws RuntimeException{

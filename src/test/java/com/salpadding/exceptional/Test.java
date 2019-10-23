@@ -48,7 +48,7 @@ public class Test {
             }
             return builder.build();
         }).map(HttpGet::new)
-                .flatMap(req -> Result.completedResult(httpclient).onClean((c) -> {
+                .flatMap(req -> Result.of(httpclient).onClean((c) -> {
                     c.close();
                     System.out.println("closed");
                 }).map((c) -> c.execute(req)))
