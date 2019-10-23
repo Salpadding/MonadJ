@@ -1,6 +1,7 @@
 package com.salpadding.exceptional;
 
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
@@ -32,22 +33,17 @@ public class Bar{
                 .ifPresent(x -> x.setConfig(RequestConfig.custom().setConnectTimeout(HTTP_TIMEOUT).build()))
                 .flatMap((req) -> client.map(c -> c.execute(req)))
                 .onClean(Closeable::close)
-                .map(Bar::getBody)
+                .map(resp -> {
+                    int status = resp.getStatusLine().getStatusCode();
+                    if (status < 200 || status >= 300){
+                        throw new HttpException(status + " http error");
+                    }
+                    return resp;
+                })
+                .map(resp -> EntityUtils.toByteArray(resp.getEntity()))
                 .ifPresent(body -> System.out.println(new String(body)))
                 .except((e) -> System.err.printf("get %s failed", url))
                 .cleanUp()
         ;
-    }
-    private static byte[] getBody(final HttpResponse response) {
-        int status = response.getStatusLine().getStatusCode();
-        if (status < 200 || status >= 300) {
-            return null;
-        }
-        try {
-            HttpEntity entity = response.getEntity();
-            return entity != null ? EntityUtils.toByteArray(entity) : null;
-        } catch (Exception e) {
-            return null;
-        }
     }
 }
