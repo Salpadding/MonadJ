@@ -114,7 +114,7 @@ public class Result<T> {
         return this;
     }
 
-    public T orElseGetSupply(BiFunction<T, Throwable, T> function) {
+    public T orElseSupply(BiFunction<T, Throwable, T> function) {
         if(error == null){
             return data;
         }
