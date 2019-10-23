@@ -104,6 +104,17 @@ public class ResultTest {
     }
 
     @Test
+    public void testNotCleanUpWhenFlatMapFailed() {
+        boolean[] booleans = new boolean[2];
+        Result.of(null)
+                .onClean((o) -> booleans[0] = true)
+                .flatMap(i -> Result.of(true).onClean((o) -> booleans[1] = true))
+                .cleanUp();
+        assert booleans[0];
+        assert !booleans[1];
+    }
+
+    @Test
     public void testOrElseOnFailed() {
         Result<Integer> i = Result.supply(() -> 1 / 0).orElse(1);
         assert i.get() == 1;
