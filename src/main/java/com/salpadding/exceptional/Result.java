@@ -51,7 +51,11 @@ public class Result<T> {
             return new Result<>(null, error, procedures);
         }
         try {
-            return new Result<>(applier.apply(data), null, procedures);
+            U u = applier.apply(data);
+            if (u == null) {
+                throw new NoSuchElementException("response of applier is null");
+            }
+            return new Result<>(u, null, procedures);
         } catch (Throwable t) {
             return new Result<>(null, t, procedures);
         }
@@ -74,6 +78,9 @@ public class Result<T> {
             return new Result<>(null, error, procedures);
         }
         Result<U> res = function.apply(data);
+        if (res == null){
+            return new Result<>(null, new NullPointerException("return null Result in flatMap"), procedures);
+        }
         List<Procedure> tmp = new LinkedList<>(procedures);
         tmp.addAll(res.procedures);
         res.procedures = tmp;
@@ -115,7 +122,7 @@ public class Result<T> {
     }
 
     public T orElseSupply(BiFunction<T, Throwable, T> function) {
-        if(error == null){
+        if (error == null) {
             return data;
         }
         return function.apply(data, error);
