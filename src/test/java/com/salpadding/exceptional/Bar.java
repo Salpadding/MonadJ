@@ -1,8 +1,6 @@
 package com.salpadding.exceptional;
 
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpException;
-import org.apache.http.HttpResponse;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
