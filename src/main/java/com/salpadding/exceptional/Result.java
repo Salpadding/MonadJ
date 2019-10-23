@@ -36,11 +36,11 @@ public class Result<T, E extends Throwable> {
         return new Result<>(data, null);
     }
 
-    public static <U> Result<U, Throwable> supply(Supplier<U, ?> supplier) {
+    public static <U> Result<U, Throwable> supply(Supplier<U, ? extends Throwable> supplier) {
         return supply(supplier, e -> e);
     }
 
-    public static <U, V extends Throwable> Result<U, V> supply(Supplier<U, ?> supplier, Function<Throwable, V> handler) {
+    public static <U, V extends Throwable> Result<U, V> supply(Supplier<U, ? extends Throwable> supplier, Function<Throwable, V> handler) {
         try {
             return new Result<>(supplier.get(), null);
         } catch (Throwable e) {
