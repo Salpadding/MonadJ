@@ -38,7 +38,7 @@ public class ResultTest {
     }
 
     @Test
-    public void testIfPresentSuccess(){
+    public void testIfPresentSuccess() {
         boolean[] booleans = new boolean[1];
         assert Result.of(1).ifPresent((i) -> {
             booleans[0] = true;
@@ -47,26 +47,26 @@ public class ResultTest {
     }
 
     @Test
-    public void testIfPresentFailed(){
+    public void testIfPresentFailed() {
         assert !Result.of(1).ifPresent((i) -> {
             throw new Exception("xxx");
         }).isPresent();
     }
 
     @Test
-    public void testFlatMapSuccess(){
+    public void testFlatMapSuccess() {
         Result<Boolean> success = Result.of(true);
         assert Result.of(1).flatMap(i -> success).get();
     }
 
     @Test
-    public void testFlatMapFailed(){
+    public void testFlatMapFailed() {
         Result<Boolean> success = Result.of(true);
         assert !Result.of(null).flatMap(i -> success).isPresent();
     }
 
     @Test
-    public void testExceptSuccess(){
+    public void testExceptSuccess() {
         boolean[] booleans = new boolean[1];
         Result.of(null).except((e) -> {
             booleans[0] = true;
@@ -75,7 +75,7 @@ public class ResultTest {
     }
 
     @Test
-    public void testCleanUpOnFailed(){
+    public void testCleanUpOnFailed() {
         boolean[] booleans = new boolean[1];
         Result.of(null).onClean((o) -> {
             booleans[0] = true;
@@ -84,7 +84,7 @@ public class ResultTest {
     }
 
     @Test
-    public void testCleanUpOnSuccess(){
+    public void testCleanUpOnSuccess() {
         boolean[] booleans = new boolean[1];
         Result.of(1).onClean((o) -> {
             booleans[0] = true;
@@ -93,35 +93,33 @@ public class ResultTest {
     }
 
     @Test
-    public void testCleanUpAfterFlatMap(){
+    public void testCleanUpAfterFlatMap() {
         boolean[] booleans = new boolean[1];
-        Result.of(1).onClean((o) -> booleans[0] = true)
-                .flatMap(i -> Result.of(null))
-                .cleanUp();
+        Result.of(1).onClean((o) -> booleans[0] = true).flatMap(i -> Result.of(null)).cleanUp();
         assert booleans[0];
     }
 
     @Test
-    public void testOrElseOnFailed(){
-        Result<Integer> i = Result.supply(() -> 1/0 ).orElse(1);
+    public void testOrElseOnFailed() {
+        Result<Integer> i = Result.supply(() -> 1 / 0).orElse(1);
         assert i.get() == 1;
     }
 
     @Test
-    public void testOrElseOnSuccess(){
-        Result<Integer> i = Result.supply(() -> 1 * 0 ).orElse(1);
+    public void testOrElseOnSuccess() {
+        Result<Integer> i = Result.supply(() -> 1 * 0).orElse(1);
         assert i.get() == 0;
     }
 
     @Test
-    public void testOrElseGetOnFailed(){
-        int i = Result.supply(() -> 1/0 ).orElseGet(1);
+    public void testOrElseGetOnFailed() {
+        int i = Result.supply(() -> 1 / 0).orElseGet(1);
         assert i == 1;
     }
 
     @Test
-    public void testOrElseGetOnSuccess(){
-        int i = Result.supply(() -> 1 * 0 ).orElseGet(1);
+    public void testOrElseGetOnSuccess() {
+        int i = Result.supply(() -> 1 * 0).orElseGet(1);
         assert i == 0;
     }
 }

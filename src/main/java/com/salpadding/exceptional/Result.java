@@ -28,43 +28,43 @@ public class Result<T> {
     /**
      *
      * @param data completed result, not Nullable
-     * @param <U> any type
+     * @param <U>  any type
      * @return data wrapper
      */
     public static <U> Result<U> of(U data) {
-        if (data == null){
+        if (data == null) {
             return new Result<>(null, new NullPointerException());
         }
         return new Result<>(data, null);
     }
 
-    public static <U> Result<U> supply(Supplier<U, ? extends Throwable> supplier){
-        try{
+    public static <U> Result<U> supply(Supplier<U, ? extends Throwable> supplier) {
+        try {
             return new Result<>(supplier.get(), null);
-        }catch (Throwable e){
+        } catch (Throwable e) {
             return new Result<>(null, e);
         }
     }
 
-    public <U> Result<U> map(Applier<T, U, ? extends Throwable> applier){
+    public <U> Result<U> map(Applier<T, U, ? extends Throwable> applier) {
         if (error != null) {
             return new Result<>(null, error, procedures);
         }
-        try{
+        try {
             return new Result<>(applier.apply(data), null, procedures);
-        }catch (Throwable t){
+        } catch (Throwable t) {
             return new Result<>(null, t, procedures);
         }
     }
 
-    public Result<T> ifPresent(Consumer<T, ? extends Throwable> consumer){
+    public Result<T> ifPresent(Consumer<T, ? extends Throwable> consumer) {
         if (error != null) {
             return this;
         }
-        try{
+        try {
             consumer.consume(data);
             return this;
-        }catch (Throwable t){
+        } catch (Throwable t) {
             return new Result<>(null, t, procedures);
         }
     }
@@ -80,20 +80,20 @@ public class Result<T> {
         return res;
     }
 
-    public Result<T> except(java.util.function.Consumer<Throwable> consumer){
-        if (error != null){
+    public Result<T> except(java.util.function.Consumer<Throwable> consumer) {
+        if (error != null) {
             consumer.accept(error);
             return this;
         }
         return this;
     }
 
-    public Result<T> onClean(Consumer<T, ? extends Throwable> consumer){
-        this.procedures.add(()-> consumer.consume(data));
+    public Result<T> onClean(Consumer<T, ? extends Throwable> consumer) {
+        this.procedures.add(() -> consumer.consume(data));
         return this;
     }
 
-    public Result<T> cleanUp(){
+    public Result<T> cleanUp() {
         this.procedures.forEach(p -> {
             try {
                 p.eval();
@@ -104,31 +104,31 @@ public class Result<T> {
         return this;
     }
 
-    public Result<T> orElse(T data) throws RuntimeException{
-        if (data == null){
+    public Result<T> orElse(T data) throws RuntimeException {
+        if (data == null) {
             throw new NoSuchElementException("orElse require non null element");
         }
-        if (error != null){
+        if (error != null) {
             return new Result<>(data, null, procedures);
         }
         return this;
     }
 
-    public T orElseGet(T data){
-        if (error != null){
+    public T orElseGet(T data) {
+        if (error != null) {
             return data;
         }
         return this.data;
     }
 
-    public T get() throws RuntimeException{
-        if (error != null){
+    public T get() throws RuntimeException {
+        if (error != null) {
             throw new RuntimeException(error.getMessage());
         }
         return data;
     }
 
-    public boolean isPresent(){
+    public boolean isPresent() {
         return error == null;
     }
 }

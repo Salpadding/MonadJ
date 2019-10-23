@@ -12,16 +12,15 @@ import org.apache.http.util.EntityUtils;
 
 import java.net.URI;
 
-public class Foo{
+public class Foo {
     private static final int HTTP_TIMEOUT = 5000;
 
-    public static void main(String... args){
+    public static void main(String... args) {
         String url = "http://www.baidu.com";
 
         // create http client
         CloseableHttpClient httpclient = HttpClients.custom()
-                .setConnectionManager(new PoolingHttpClientConnectionManager())
-                .setConnectionManagerShared(true)
+                .setConnectionManager(new PoolingHttpClientConnectionManager()).setConnectionManagerShared(true)
                 .build();
         CloseableHttpResponse resp = null;
         try {
@@ -43,6 +42,7 @@ public class Foo{
             throw new RuntimeException("get " + url + " fail");
         }
     }
+
     private static byte[] getBody(final HttpResponse response) {
         int status = response.getStatusLine().getStatusCode();
         if (status < 200 || status >= 300) {
