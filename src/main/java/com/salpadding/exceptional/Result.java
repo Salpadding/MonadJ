@@ -61,7 +61,7 @@ public class Result<T> {
         }
     }
 
-    public <U> Result<U> apply(Applier<T, U, ? extends Throwable> applier){
+    public <U> Result<U> map(Applier<T, U, ? extends Throwable> applier){
         if (error != null) {
             return new Result<>(null, error, procedures);
         }
@@ -72,7 +72,19 @@ public class Result<T> {
         }
     }
 
-    public <U> Result<U> compose(Function<T, Result<U>> function) {
+    public Result<T> ifPresent(Consumer<T, ? extends Throwable> consumer){
+        if (error != null) {
+            return this;
+        }
+        try{
+            consumer.consume(data);
+            return this;
+        }catch (Throwable t){
+            return new Result<>(null, t, procedures);
+        }
+    }
+
+    public <U> Result<U> flatMap(Function<T, Result<U>> function) {
         if (error != null) {
             return new Result<>(null, error, procedures);
         }
@@ -82,7 +94,6 @@ public class Result<T> {
         res.procedures = tmp;
         return res;
     }
-
 
     public <R> Result<R> handle(Handler<T, Throwable, R, ? extends Throwable> function){
         try{
