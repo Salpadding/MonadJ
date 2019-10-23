@@ -24,24 +24,25 @@ public class Bar{
 
         Result<CloseableHttpClient> client = Result
                 .of(httpclient)
-                .onClean(Closeable::close);
+                .onClean(Closeable::close); // register cleaner
 
         Result.supply(() -> new URI(url))
                 .map(HttpGet::new)
                 .ifPresent(x -> x.setConfig(RequestConfig.custom().setConnectTimeout(HTTP_TIMEOUT).build()))
                 .flatMap((req) -> client.map(c -> c.execute(req)))
-                .onClean(Closeable::close)
+                .onClean(Closeable::close) // register cleaner
                 .map(resp -> {
                     int status = resp.getStatusLine().getStatusCode();
+                    // throw exception when http error occurs
                     if (status < 200 || status >= 300){
                         throw new HttpException(status + " http error");
                     }
                     return resp;
                 })
                 .map(resp -> EntityUtils.toByteArray(resp.getEntity()))
-                .ifPresent(body -> System.out.println(new String(body)))
-                .except((e) -> System.err.printf("get %s failed", url))
-                .cleanUp()
+                .ifPresent(body -> System.out.println(new String(body))) // invoke when body received
+                .except((e) -> System.err.printf("get %s failed", url)) // handle exception here
+                .cleanUp() // clean up resources
         ;
     }
 }

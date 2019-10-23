@@ -18,19 +18,23 @@ public class Foo{
     public static void main(String... args){
         String url = "http://www.baidu.com";
 
+        // create http client
         CloseableHttpClient httpclient = HttpClients.custom()
                 .setConnectionManager(new PoolingHttpClientConnectionManager())
                 .setConnectionManagerShared(true)
                 .build();
         CloseableHttpResponse resp = null;
         try {
+            // build url
             URI uriObject = new URI(url);
             HttpGet httpGet = new HttpGet(uriObject);
+
+            // set http request config
             httpGet.setConfig(RequestConfig.custom().setConnectTimeout(HTTP_TIMEOUT).build());
-            // Create a custom response handler
             resp = httpclient.execute(httpGet);
             System.out.println(new String(getBody(resp)));
         } catch (Exception e) {
+            // clean resource
             try {
                 httpclient.close();
                 resp.close();
