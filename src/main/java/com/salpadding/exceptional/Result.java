@@ -3,6 +3,7 @@ package com.salpadding.exceptional;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
@@ -26,7 +27,6 @@ public class Result<T> {
     }
 
     /**
-     *
      * @param data completed result, not Nullable
      * @param <U>  any type
      * @return data wrapper
@@ -112,6 +112,13 @@ public class Result<T> {
             return new Result<>(data, null, procedures);
         }
         return this;
+    }
+
+    public T orElseGetSupply(BiFunction<T, Throwable, T> function) {
+        if(error == null){
+            return data;
+        }
+        return function.apply(data, error);
     }
 
     public T orElseGet(T data) {
