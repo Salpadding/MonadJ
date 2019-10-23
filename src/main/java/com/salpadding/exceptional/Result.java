@@ -128,4 +128,7 @@ public class Result<T> {
         return data;
     }
 
+    public boolean isPresent(){
+        return error == null;
+    }
 }
