@@ -25,13 +25,13 @@ public class Bar{
 
         Result<CloseableHttpClient> client = Result
                 .completedResult(httpclient)
-                .clean(Closeable::close);
+                .onClean(Closeable::close);
 
         Result.supply(() -> new URI(url))
                 .map(HttpGet::new)
                 .ifPresent(x -> x.setConfig(RequestConfig.custom().setConnectTimeout(HTTP_TIMEOUT).build()))
                 .flatMap((req) -> client.map(c -> c.execute(req)))
-                .clean(Closeable::close)
+                .onClean(Closeable::close)
                 .map(Bar::getBody)
                 .ifPresent(body -> System.out.println(new String(body)))
                 .except((e) -> System.err.printf("get %s failed", url))

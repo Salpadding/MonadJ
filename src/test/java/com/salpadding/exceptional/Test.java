@@ -48,11 +48,11 @@ public class Test {
             }
             return builder.build();
         }).map(HttpGet::new)
-                .flatMap(req -> Result.completedResult(httpclient).clean((c) -> {
+                .flatMap(req -> Result.completedResult(httpclient).onClean((c) -> {
                     c.close();
                     System.out.println("closed");
                 }).map((c) -> c.execute(req)))
-                .clean(Closeable::close).map(Test::getBody).cleanUp().get();
+                .onClean(Closeable::close).map(Test::getBody).cleanUp().get();
     }
 
     private static byte[] getBody(final HttpResponse response) {

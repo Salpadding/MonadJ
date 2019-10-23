@@ -111,7 +111,7 @@ public class Result<T> {
         return this;
     }
 
-    public Result<T> clean(Consumer<T, ? extends Throwable> consumer){
+    public Result<T> onClean(Consumer<T, ? extends Throwable> consumer){
         this.procedures.add(()-> consumer.consume(data));
         return this;
     }
