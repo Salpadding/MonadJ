@@ -9,21 +9,21 @@ import java.util.function.Function;
 /**
  * @param <T> Functor for functionally exception handling
  */
-public class Result<T> {
+public class Result<T, E extends Throwable> {
     private T data;
-    private Throwable error;
-    private List<Procedure> procedures;
+    private E error;
+    private List<Runnable> cleaners;
 
-    private Result(T data, Throwable error) {
+    private Result(T data, E error) {
         this.data = data;
         this.error = error;
-        this.procedures = new LinkedList<>();
+        this.cleaners = new LinkedList<>();
     }
 
-    private Result(T data, Throwable error, List<Procedure> procedures) {
+    private Result(T data, E error, List<Runnable> cleaners) {
         this.data = data;
         this.error = error;
-        this.procedures = procedures;
+        this.cleaners = cleaners;
     }
 
     /**
@@ -31,63 +31,88 @@ public class Result<T> {
      * @param <U>  any type
      * @return data wrapper
      */
-    public static <U> Result<U> of(U data) {
+    public static <U> Result<U, Throwable> of(U data) {
         if (data == null) {
             return new Result<>(null, new NullPointerException());
         }
         return new Result<>(data, null);
     }
 
-    public static <U> Result<U> supply(Supplier<U, ? extends Throwable> supplier) {
+    public static <U> Result<U, Throwable> supply(Supplier<U, ?> supplier) {
+        return supply(supplier, e -> e);
+    }
+
+    public static <U, V extends Throwable> Result<U, V> supply(Supplier<U, ?> supplier, Function<Throwable, V> handler) {
         try {
             return new Result<>(supplier.get(), null);
         } catch (Throwable e) {
-            return new Result<>(null, e);
+            return new Result<>(null, handler.apply(e));
         }
     }
 
-    public <U> Result<U> map(Applier<T, U, ? extends Throwable> applier) {
+    public <U> Result<U, Throwable> map(Applier<T, U, ? extends Throwable> applier) {
+        return map(applier, e -> e);
+    }
+
+    public <U, V extends Throwable> Result<U, V> map(Applier<T, U, ?> applier, Function<Throwable, V> handler) {
         if (error != null) {
-            return new Result<>(null, error, procedures);
+            return new Result<>(null, handler.apply(error), cleaners);
         }
         try {
             U u = applier.apply(data);
             if (u == null) {
-                throw new NoSuchElementException("response of applier is null");
+                throw new NullPointerException();
             }
-            return new Result<>(u, null, procedures);
+            return new Result<>(u, null, cleaners);
         } catch (Throwable t) {
-            return new Result<>(null, t, procedures);
+            return new Result<>(null, handler.apply(t), cleaners);
         }
     }
 
-    public Result<T> ifPresent(Consumer<T, ? extends Throwable> consumer) {
+    /**
+     * @param consumer
+     * @param handler  the handler never return null
+     * @param <V>
+     * @return
+     */
+    public <V extends Throwable> Result<T, V> ifPresent(Consumer<T, ? extends Throwable> consumer, Function<Throwable, V> handler) {
         if (error != null) {
-            return this;
+            return new Result<>(null, handler.apply(error), cleaners);
         }
         try {
             consumer.consume(data);
-            return this;
+            return new Result<>(data, null, cleaners);
         } catch (Throwable t) {
-            return new Result<>(null, t, procedures);
+            return new Result<>(null, handler.apply(t), cleaners);
         }
     }
 
-    public <U> Result<U> flatMap(Function<T, Result<U>> function) {
+    public Result<T, Throwable> ifPresent(Consumer<T, ? extends Throwable> consumer) {
+        return ifPresent(consumer, e -> e);
+    }
+
+    public <U> Result<U, Throwable> flatMap(Function<T, Result<U, ? extends Throwable>> function) {
+        return flatMap(function, e -> e);
+    }
+
+    public <U, V extends Throwable> Result<U, V> flatMap(Function<T, Result<U, ? extends Throwable>> function, Function<Throwable, V> handler) {
         if (error != null) {
-            return new Result<>(null, error, procedures);
+            return new Result<>(null, handler.apply(error), cleaners);
         }
-        Result<U> res = function.apply(data);
-        if (res == null){
-            return new Result<>(null, new NullPointerException("return null Result in flatMap"), procedures);
+        Result<U, ?> res = function.apply(data);
+        try {
+            if (res == null) {
+                throw new NullPointerException("return null Result in flatMap");
+            }
+            List<Runnable> tmp = new LinkedList<>(cleaners);
+            tmp.addAll(res.cleaners);
+            return new Result<>(res.data, handler.apply(res.error), tmp);
+        } catch (Throwable t) {
+            return new Result<>(null, handler.apply(t), cleaners);
         }
-        List<Procedure> tmp = new LinkedList<>(procedures);
-        tmp.addAll(res.procedures);
-        res.procedures = tmp;
-        return res;
     }
 
-    public Result<T> except(java.util.function.Consumer<Throwable> consumer) {
+    public Result<T, E> except(java.util.function.Consumer<Throwable> consumer) {
         if (error != null) {
             consumer.accept(error);
             return this;
@@ -95,49 +120,46 @@ public class Result<T> {
         return this;
     }
 
-    public Result<T> onClean(Consumer<T, ? extends Throwable> consumer) {
-        this.procedures.add(() -> consumer.consume(data));
+    public Result<T, E> onClean(Consumer<T, ? extends Throwable> consumer) {
+        this.cleaners.add(() -> consumer.consume(data));
         return this;
     }
 
-    public Result<T> cleanUp() {
-        this.procedures.forEach(p -> {
+    public Result<T, E> cleanUp() {
+        this.cleaners.forEach(p -> {
             try {
                 p.eval();
             } catch (Throwable ignored) {
             }
         });
-        this.procedures = new LinkedList<>();
+        this.cleaners = new LinkedList<>();
         return this;
     }
 
-    public Result<T> orElse(T data) throws RuntimeException {
-        if (data == null) {
-            throw new NoSuchElementException("orElse require non null element");
-        }
-        if (error != null) {
-            return new Result<>(data, null, procedures);
-        }
-        return this;
-    }
-
-    public T orElseSupply(BiFunction<T, Throwable, T> function) {
-        if (error == null) {
-            return data;
-        }
-        return function.apply(data, error);
-    }
-
-    public T orElseGet(T data) {
+    public T orElse(T data) {
         if (error != null) {
             return data;
         }
         return this.data;
     }
 
-    public T get() throws RuntimeException {
+    public T orElseGet(java.util.function.Supplier<T> supplier) {
         if (error != null) {
-            throw new RuntimeException(error.getMessage());
+            return supplier.get();
+        }
+        return data;
+    }
+
+    public T get() throws E {
+        if (error != null) {
+            throw error;
+        }
+        return data;
+    }
+
+    public <V extends Throwable> T get(Function<Throwable, V> handler) throws V {
+        if (error != null) {
+            throw handler.apply(error);
         }
         return data;
     }

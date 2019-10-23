@@ -21,7 +21,7 @@ public class Bar {
                 .setConnectionManager(new PoolingHttpClientConnectionManager()).setConnectionManagerShared(true)
                 .build();
 
-        Result<CloseableHttpClient> client = Result.of(httpclient).onClean(Closeable::close); // register cleaner
+        Result<CloseableHttpClient, Throwable> client = Result.of(httpclient).onClean(Closeable::close); // register cleaner
 
         Result.supply(() -> new URI(url)).map(HttpGet::new)
                 .ifPresent(x -> x.setConfig(RequestConfig.custom().setConnectTimeout(HTTP_TIMEOUT).build()))

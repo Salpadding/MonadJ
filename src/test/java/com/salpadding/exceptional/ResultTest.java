@@ -28,7 +28,7 @@ public class ResultTest {
     }
 
     @Test
-    public void testMapSuccess() {
+    public void testMapSuccess() throws Throwable{
         assert Result.of(1).map(i -> i + 1).get() == 2;
     }
 
@@ -54,14 +54,14 @@ public class ResultTest {
     }
 
     @Test
-    public void testFlatMapSuccess() {
-        Result<Boolean> success = Result.of(true);
+    public void testFlatMapSuccess() throws Throwable {
+        Result<Boolean, Throwable> success = Result.of(true);
         assert Result.of(1).flatMap(i -> success).get();
     }
 
     @Test
     public void testFlatMapFailed() {
-        Result<Boolean> success = Result.of(true);
+        Result<Boolean, Throwable> success = Result.of(true);
         assert !Result.of(null).flatMap(i -> success).isPresent();
     }
 
@@ -116,25 +116,25 @@ public class ResultTest {
 
     @Test
     public void testOrElseOnFailed() {
-        Result<Integer> i = Result.supply(() -> 1 / 0).orElse(1);
-        assert i.get() == 1;
+        int i = Result.supply(() -> 1 / 0).orElse(1);
+        assert i == 1;
     }
 
     @Test
-    public void testOrElseOnSuccess() {
-        Result<Integer> i = Result.supply(() -> 1 * 0).orElse(1);
-        assert i.get() == 0;
+    public void testOrElseOnSuccess()  {
+        int i = Result.supply(() -> 1 * 0).orElse(1);
+        assert i == 0;
     }
 
     @Test
     public void testOrElseGetOnFailed() {
-        int i = Result.supply(() -> 1 / 0).orElseGet(1);
+        int i = Result.supply(() -> 1 / 0).orElseGet(() -> 1);
         assert i == 1;
     }
 
     @Test
     public void testOrElseGetOnSuccess() {
-        int i = Result.supply(() -> 1 * 0).orElseGet(1);
+        int i = Result.supply(() -> 1 * 0).orElseGet(() -> 1);
         assert i == 0;
     }
 }
