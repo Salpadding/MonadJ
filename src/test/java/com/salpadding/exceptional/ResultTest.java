@@ -94,9 +94,13 @@ public class ResultTest {
 
     @Test
     public void testCleanUpAfterFlatMap() {
-        boolean[] booleans = new boolean[1];
-        Result.of(1).onClean((o) -> booleans[0] = true).flatMap(i -> Result.of(null)).cleanUp();
+        boolean[] booleans = new boolean[2];
+        Result.of(1)
+                .onClean((o) -> booleans[0] = true)
+                .flatMap(i -> Result.of(null).onClean((o) -> booleans[1] = true))
+                .cleanUp();
         assert booleans[0];
+        assert booleans[1];
     }
 
     @Test
