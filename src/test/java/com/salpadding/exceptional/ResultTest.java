@@ -28,6 +28,28 @@ public class ResultTest {
     }
 
     @Test
+    public void testSupplyFailedWhenHandlerNull() {
+        Exception ex = null;
+        try{
+            Result.supply(() -> 1 / 0, null);
+        }catch (Exception e){
+            ex = e;
+        }
+        assert ex != null;
+    }
+
+    @Test
+    public void testSupplyFailedWhenSupplierNull() {
+        Exception ex = null;
+        try{
+            Result.supply(null, e -> e);
+        }catch (Exception e){
+            ex = e;
+        }
+        assert ex != null;
+    }
+
+    @Test
     public void testMapSuccess() throws Throwable{
         assert Result.of(1).map(i -> i + 1).get() == 2;
     }
@@ -55,13 +77,13 @@ public class ResultTest {
 
     @Test
     public void testFlatMapSuccess() throws Throwable {
-        Result<Boolean, Throwable> success = Result.of(true);
+        Result<Boolean, Exception> success = Result.of(true);
         assert Result.of(1).flatMap(i -> success).get();
     }
 
     @Test
     public void testFlatMapFailed() {
-        Result<Boolean, Throwable> success = Result.of(true);
+        Result<Boolean, Exception> success = Result.of(true);
         assert !Result.of(null).flatMap(i -> success).isPresent();
     }
 
