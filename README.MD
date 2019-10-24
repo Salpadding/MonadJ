@@ -1,4 +1,4 @@
-# Monad
+# MonadJ
 
 ## Forced to write annoying try-catch code looks like following ?
 
