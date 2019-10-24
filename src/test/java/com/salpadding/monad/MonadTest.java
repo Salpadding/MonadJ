@@ -207,10 +207,10 @@ public class MonadTest {
 
     @Test
     public void testGetOrThrow() throws Exception {
-        Monad.of(1).getOrThrow(new Exception());
+        Monad.of(1).orElseThrow(new Exception());
         Exception[] exceptions = new Exception[1];
         try {
-            Monad.of(null).getOrThrow(new RuntimeException());
+            Monad.of(null).orElseThrow(new RuntimeException());
         } catch (Exception e) {
             assert e instanceof RuntimeException;
             exceptions[0] = e;

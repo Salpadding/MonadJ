@@ -286,7 +286,7 @@ public class Monad<T, E extends Exception> {
      *
      * @return wrapped value
      */
-    public <V extends Exception> T getOrThrow(V v) throws V {
+    public <V extends Exception> T orElseThrow(V v) throws V {
         cleanUp();
         Objects.requireNonNull(v);
         if (error != null) {
