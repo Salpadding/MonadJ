@@ -27,27 +27,6 @@ public class MonadTest {
         assert !Monad.supply(() -> 1 / 0).isPresent();
     }
 
-    @Test
-    public void testSupplyFailedWhenHandlerNull() {
-        Exception ex = null;
-        try{
-            Monad.supply(() -> 1 / 0, null);
-        }catch (Exception e){
-            ex = e;
-        }
-        assert ex != null;
-    }
-
-    @Test
-    public void testSupplyFailedWhenSupplierNull() {
-        Exception ex = null;
-        try{
-            Monad.supply(null, e -> e);
-        }catch (Exception e){
-            ex = e;
-        }
-        assert ex != null;
-    }
 
     @Test
     public void testMapSuccess() throws Throwable{
