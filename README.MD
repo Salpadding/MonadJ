@@ -1,6 +1,6 @@
 # Monad
 
-## Annoying by try&catch code looks like following ?
+## Forced to write annoying try-catch code looks like following ?
 
 ```java
 package com.salpadding.exceptional;
@@ -61,7 +61,7 @@ public class JDBC {
 
 ```
 
-## Avoid try-catch by Monad api!
+## Try Monad !
 
 ```java
 package com.salpadding.exceptional;
