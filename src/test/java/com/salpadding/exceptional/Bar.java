@@ -22,9 +22,9 @@ public class Bar {
                 .setConnectionManager(new PoolingHttpClientConnectionManager()).setConnectionManagerShared(true)
                 .build();
 
-        Result<CloseableHttpClient, Exception> client = Result.of(httpclient).onClean(Closeable::close); // clean
+        Monad<CloseableHttpClient, Exception> client = Monad.of(httpclient).onClean(Closeable::close); // clean
 
-        String responseBody = Result.of(url).map(URI::new).map(HttpGet::new)
+        String responseBody = Monad.of(url).map(URI::new).map(HttpGet::new)
                 .ifPresent(x -> x.setConfig(RequestConfig.custom().setConnectTimeout(HTTP_TIMEOUT).build()))
                 .compose(client, (g, c) -> c.execute(g))
                 .onClean(Closeable::close) // register cleaner

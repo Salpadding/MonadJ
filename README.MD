@@ -1,4 +1,4 @@
-# Result
+# Monad
 
 ## Annoying by try&catch code looks like following ?
 
@@ -63,7 +63,7 @@ public class Foo {
 }
 ```
 
-## Avoid try-catch by Result api!
+## Avoid try-catch by Monad api!
 
 ```java
 package com.salpadding.exceptional;
@@ -90,9 +90,9 @@ public class Bar {
                 .setConnectionManager(new PoolingHttpClientConnectionManager()).setConnectionManagerShared(true)
                 .build();
 
-        Result<CloseableHttpClient, Throwable> client = Result.of(httpclient).onClean(Closeable::close); // clean
+        Monad<CloseableHttpClient, Exception> client = Monad.of(httpclient).onClean(Closeable::close); // clean
 
-        String responseBody = Result.of(url).map(URI::new).map(HttpGet::new)
+        String responseBody = Monad.of(url).map(URI::new).map(HttpGet::new)
                 .ifPresent(x -> x.setConfig(RequestConfig.custom().setConnectTimeout(HTTP_TIMEOUT).build()))
                 .compose(client, (g, c) -> c.execute(g))
                 .onClean(Closeable::close) // register cleaner
