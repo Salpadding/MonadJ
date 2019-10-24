@@ -17,16 +17,15 @@ import org.apache.http.util.EntityUtils;
 
 import java.net.URI;
 
-public class Foo{
+public class Foo {
     private static final int HTTP_TIMEOUT = 5000;
 
-    public static void main(String... args){
+    public static void main(String... args) {
         String url = "http://www.baidu.com";
 
         // create http client
         CloseableHttpClient httpclient = HttpClients.custom()
-                .setConnectionManager(new PoolingHttpClientConnectionManager())
-                .setConnectionManagerShared(true)
+                .setConnectionManager(new PoolingHttpClientConnectionManager()).setConnectionManagerShared(true)
                 .build();
         CloseableHttpResponse resp = null;
         try {
@@ -37,7 +36,7 @@ public class Foo{
             // set http request config
             httpGet.setConfig(RequestConfig.custom().setConnectTimeout(HTTP_TIMEOUT).build());
             resp = httpclient.execute(httpGet);
-            System.out.println(new String(getBody(resp)));
+            System.out.println("the length of response body is" + new String(getBody(resp)).length());
         } catch (Exception e) {
             // clean resource
             try {
@@ -48,6 +47,7 @@ public class Foo{
             throw new RuntimeException("get " + url + " fail");
         }
     }
+
     private static byte[] getBody(final HttpResponse response) {
         int status = response.getStatusLine().getStatusCode();
         if (status < 200 || status >= 300) {
@@ -70,6 +70,7 @@ package com.salpadding.exceptional;
 
 import org.apache.http.HttpException;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -79,38 +80,34 @@ import org.apache.http.util.EntityUtils;
 import java.io.Closeable;
 import java.net.URI;
 
-public class Bar{
+public class Bar {
     private static final int HTTP_TIMEOUT = 5000;
 
-    public static void main(String... args) throws RuntimeException{
+    public static void main(String... args) {
         String url = "http://www.baidu.com";
 
         CloseableHttpClient httpclient = HttpClients.custom()
-                .setConnectionManager(new PoolingHttpClientConnectionManager())
-                .setConnectionManagerShared(true)
+                .setConnectionManager(new PoolingHttpClientConnectionManager()).setConnectionManagerShared(true)
                 .build();
 
-        Result<CloseableHttpClient> client = Result
-                .of(httpclient)
-                .onClean(Closeable::close); // register cleaner
+        Result<CloseableHttpClient, Throwable> client = Result.of(httpclient).onClean(Closeable::close); // clean
 
-        Result.supply(() -> new URI(url))
-                .map(HttpGet::new)
+        String responseBody = Result.of(url).map(URI::new).map(HttpGet::new)
                 .ifPresent(x -> x.setConfig(RequestConfig.custom().setConnectTimeout(HTTP_TIMEOUT).build()))
-                .flatMap((req) -> client.map(c -> c.execute(req)))
+                .compose(client, (g, c) -> c.execute(g))
                 .onClean(Closeable::close) // register cleaner
                 .map(resp -> {
                     int status = resp.getStatusLine().getStatusCode();
                     // throw exception when http error occurs
-                    if (status < 200 || status >= 300){
+                    if (status < 200 || status >= 300) {
                         throw new HttpException(status + " http error");
                     }
                     return resp;
-                })
-                .map(resp -> EntityUtils.toByteArray(resp.getEntity()))
-                .ifPresent(body -> System.out.println(new String(body))) // invoke when body received
-                .except((e) -> System.err.printf("get %s failed", url)) // handle exception here
-                .cleanUp() // clean up resources
+                }).map(CloseableHttpResponse::getEntity).map(EntityUtils::toByteArray)
+                .map(String::new)
+                .cleanUp()
+                .get(t -> new RuntimeException("request " + url + " failed"));
+        System.out.println("the length of response body is " + responseBody.length());
         ;
     }
 }

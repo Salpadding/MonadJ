@@ -25,6 +25,7 @@ public class Result<T, E extends Throwable> {
     }
 
     /**
+     * a -> M a b
      * @param data completed result, not Nullable
      * @param <U>  any type
      * @return data wrapper
@@ -36,10 +37,23 @@ public class Result<T, E extends Throwable> {
         return new Result<>(data, null);
     }
 
+    /**
+     * a -> M a
+     * @param supplier
+     * @param <U>
+     * @return
+     */
     public static <U> Result<U, Throwable> supply(Supplier<U, ? extends Throwable> supplier) {
         return supply(supplier, e -> e);
     }
 
+    /**
+     * @param supplier
+     * @param handler
+     * @param <U>
+     * @param <V>
+     * @return
+     */
     public static <U, V extends Throwable> Result<U, V> supply(Supplier<U, ? extends Throwable> supplier, Function<Throwable, V> handler) {
         try {
             return new Result<>(supplier.get(), null);
@@ -48,6 +62,12 @@ public class Result<T, E extends Throwable> {
         }
     }
 
+    /**
+     * M a -> (a -> b) -> M b
+     * @param applier
+     * @param <U>
+     * @return
+     */
     public <U> Result<U, Throwable> map(Applier<T, U, ? extends Throwable> applier) {
         return map(applier, e -> e);
     }
@@ -93,6 +113,39 @@ public class Result<T, E extends Throwable> {
         return flatMap(function, e -> e);
     }
 
+    /**
+     * M a -> M b -> ( a -> b -> c ) -> M c
+     * @param <U>
+     * @return
+     */
+    public <U, V> Result<V, Throwable> compose(Result<U, ? extends Throwable> other, BiFunction<T, U, V, ? extends Throwable> function){
+        if (error != null){
+            return new Result<>(null, error, cleaners);
+        }
+        List<Runnable> tmp = new LinkedList<>(cleaners);
+        tmp.addAll(other.cleaners);
+        if (other.error != null){
+            return new Result<>(null, error, tmp);
+        }
+        try{
+            V v = function.apply(data, other.data);
+            if (v == null){
+                throw new NullPointerException();
+            }
+            return new Result<>(v, null, tmp);
+        }catch (Throwable t){
+            return new Result<>(null, t, tmp);
+        }
+    }
+
+    /**
+     * M a -> (a -> M b) -> M b
+     * @param function
+     * @param handler
+     * @param <U>
+     * @param <V>
+     * @return
+     */
     public <U, V extends Throwable> Result<U, V> flatMap(Function<T, Result<U, ? extends Throwable>> function, Function<Throwable, V> handler) {
         if (error != null) {
             return new Result<>(null, handler.apply(error), cleaners);

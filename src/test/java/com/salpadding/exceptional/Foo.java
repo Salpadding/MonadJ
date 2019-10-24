@@ -31,7 +31,7 @@ public class Foo {
             // set http request config
             httpGet.setConfig(RequestConfig.custom().setConnectTimeout(HTTP_TIMEOUT).build());
             resp = httpclient.execute(httpGet);
-            System.out.println(new String(getBody(resp)));
+            System.out.println("the length of response body is" + new String(getBody(resp)).length());
         } catch (Exception e) {
             // clean resource
             try {
