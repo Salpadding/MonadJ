@@ -25,14 +25,13 @@ public class Result<T, E extends Exception> {
         this.cleaners = cleaners;
     }
 
-
     public static <U> Result<U, Exception> of(U data) {
         return of(data, e -> e);
     }
 
     /**
      *
-     * @param data nullable object
+     * @param data    nullable object
      * @param handler handle null exception when object is null
      */
     public static <U, V extends Exception> Result<U, V> of(U data, Function<Exception, V> handler) {
@@ -49,7 +48,7 @@ public class Result<T, E extends Exception> {
     }
 
     public static <U, V extends Exception> Result<U, V> supply(Supplier<U, ? extends Exception> supplier,
-                                                               Function<Exception, V> handler) {
+            Function<Exception, V> handler) {
         Objects.requireNonNull(supplier);
         Objects.requireNonNull(handler);
         try {
@@ -77,7 +76,7 @@ public class Result<T, E extends Exception> {
     }
 
     public <V extends Exception> Result<T, V> ifPresent(Consumer<T, ? extends Exception> consumer,
-                                                        Function<Exception, V> handler) {
+            Function<Exception, V> handler) {
         Objects.requireNonNull(consumer);
         Objects.requireNonNull(handler);
         if (error != null) {
@@ -100,7 +99,7 @@ public class Result<T, E extends Exception> {
     }
 
     public <U, V> Result<V, Exception> compose(Result<U, ? extends Exception> other,
-                                               BiFunction<T, U, V, ? extends Exception> function) {
+            BiFunction<T, U, V, ? extends Exception> function) {
         return compose(other, function, e -> e);
     }
 
@@ -111,7 +110,7 @@ public class Result<T, E extends Exception> {
      * @return
      */
     public <U, V, R extends Exception> Result<V, R> compose(Result<U, ? extends Exception> other,
-                                                            BiFunction<T, U, V, ? extends Exception> function, Function<Exception, R> handler) {
+            BiFunction<T, U, V, ? extends Exception> function, Function<Exception, R> handler) {
         Objects.requireNonNull(other);
         Objects.requireNonNull(function);
         Objects.requireNonNull(handler);
@@ -140,7 +139,7 @@ public class Result<T, E extends Exception> {
      * @return
      */
     public <U, V extends Exception> Result<U, V> flatMap(Function<T, Result<U, ? extends Exception>> function,
-                                                         Function<Exception, V> handler) {
+            Function<Exception, V> handler) {
         Objects.requireNonNull(function);
         Objects.requireNonNull(handler);
         if (error != null) {
@@ -230,7 +229,6 @@ public class Result<T, E extends Exception> {
         }
         return data;
     }
-
 
     public <V extends Exception> T get(Function<? super E, V> handler) throws V {
         Objects.requireNonNull(handler);
