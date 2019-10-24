@@ -51,6 +51,16 @@ public class Monad<T, E extends Exception> {
     /**
      * a -> M a
      *
+     * @param data nullable object
+     * @return an empty monad if data is null or else a presented monad
+     */
+    public static <R, U extends R> Monad<R, Exception> of(U data, Class<R> type) {
+        return of(data);
+    }
+
+    /**
+     * a -> M a
+     *
      * @param supplier
      * @param <U>
      * @return
