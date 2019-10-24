@@ -206,7 +206,7 @@ public class MonadTest {
     }
 
     @Test
-    public void testGetOrThrow() throws Exception {
+    public void testOrElseThrow() throws Exception {
         Monad.of(1).orElseThrow(new Exception());
         Exception[] exceptions = new Exception[1];
         try {
