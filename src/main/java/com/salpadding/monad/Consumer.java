@@ -1,4 +1,4 @@
-package com.salpadding.exceptional;
+package com.salpadding.monad;
 
 public interface Consumer<T, E extends Exception> {
     void consume(T data) throws E;

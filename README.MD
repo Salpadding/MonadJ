@@ -3,7 +3,7 @@
 ## Forced to write annoying try-catch code looks like following ?
 
 ```java
-package com.salpadding.exceptional;
+package com.salpadding.monad;
 
 import java.sql.*;
 
@@ -64,7 +64,7 @@ public class JDBC {
 ## Try Monad !
 
 ```java
-package com.salpadding.exceptional;
+package com.salpadding.monad;
 
 import java.sql.*;
 

@@ -1,4 +1,4 @@
-package com.salpadding.exceptional;
+package com.salpadding.monad;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

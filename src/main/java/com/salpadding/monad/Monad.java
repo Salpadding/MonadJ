@@ -1,4 +1,4 @@
-package com.salpadding.exceptional;
+package com.salpadding.monad;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -261,6 +261,21 @@ public class Monad<T, E extends Exception> {
         cleanUp();
         if (error != null) {
             throw error;
+        }
+        return data;
+    }
+
+    /**
+     * return value and clean resources
+     *
+     * @return wrapped value
+     * @throws E exception if error occurs
+     */
+    public <V extends Exception> T get(Function<E, V> function) throws V {
+        cleanUp();
+        Objects.requireNonNull(function);
+        if (error != null) {
+            throw Objects.requireNonNull(function.apply(error));
         }
         return data;
     }
