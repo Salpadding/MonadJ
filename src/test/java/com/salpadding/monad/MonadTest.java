@@ -228,4 +228,14 @@ public class MonadTest {
         assert !Monad.of(0).filter(x -> x > 0).isPresent();
         assert !Monad.of(null, Integer.class).filter(x -> x > 0).isPresent();
     }
+
+    @Test
+    public void testOrElse() throws Exception{
+        boolean[] booleans = new boolean[1];
+        assert Monad.of(null, Integer.class)
+                .orElse(Monad.of(1)).get() == 1;
+        assert Monad.of(1).orElse(Monad.of(1).onClean(x -> booleans[0] = true)).get() == 1;
+        assert booleans[0];
+    }
+
 }
