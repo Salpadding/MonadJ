@@ -77,16 +77,16 @@ public class JDBCFunctional {
 
     public static void main(String[] args) {
         Monad.of(JDBC_DRIVER).map(Class::forName) // load driver
-                .map(c -> DriverManager.getConnection(DB_URL, USER, PASS)).onClean(Connection::close) // get connection
-                .map(Connection::createStatement).onClean(Statement::close) // get statement and clean resource
-                .map(s -> s.executeQuery("SELECT * FROM crawler_article")).onClean(ResultSet::close) // get result and clean resource
-                .ifPresent((rs) -> {
+                .map(c -> DriverManager.getConnection(DB_URL, USER, PASS))// get connection
+                .map(Connection::createStatement) // get statement and clean resource
+                .map(s -> s.executeQuery("SELECT * FROM crawler_article"))// get result and clean resource
+                .peek((rs) -> {
                     while (rs.next()) {
                         String title = rs.getString("title");
                         String author = rs.getString("author");
                         System.out.println(title + ":" + author);
                     }
-                }).except(Throwable::printStackTrace).cleanUp(); // print error message and clean up
+                }).except(Throwable::printStackTrace); // print error message and clean up
     }
 }
 ```

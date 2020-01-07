@@ -94,7 +94,7 @@ public class Monad<T> {
             return this;
         }
         try {
-            consumer.consume((T) data);
+            consumer.accept((T) data);
             return this;
         } catch (Exception e) {
             this.data = null;
@@ -164,6 +164,22 @@ public class Monad<T> {
         }
         return (T) data;
     }
+
+    /**
+     * return value and clean resources
+     *
+     * @param other complement value
+     * @return data when error occurs
+     */
+    public T orElse(T other, Consumer<Exception> consumer) {
+        cleanUp();
+        if (this.error != null) {
+            consumer.accept(error);
+            return other;
+        }
+        return (T) data;
+    }
+
 
     /**
      * return value and clean resources
