@@ -266,12 +266,12 @@ public class Monad<T, E extends Exception> {
      * return value and clean resources
      *
      * @return wrapped value
-     * @throws E exception if error occurs
+     * @throws RuntimeException if error occurs
      */
-    public T get() throws E {
+    public T get() throws RuntimeException {
         cleanUp();
         if (error != null) {
-            throw error;
+            throw new RuntimeException(error);
         }
         return data;
     }
