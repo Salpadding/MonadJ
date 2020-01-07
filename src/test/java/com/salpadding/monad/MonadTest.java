@@ -4,6 +4,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.io.Closeable;
+import java.io.IOException;
+
 @RunWith(JUnit4.class)
 public class MonadTest {
 
@@ -13,7 +16,7 @@ public class MonadTest {
 
     @Test
     public void testEmpty() {
-        assert !Monad.empty(Integer.class).isPresent();
+        assert !Monad.empty().isPresent();
     }
 
     @Test
@@ -40,7 +43,7 @@ public class MonadTest {
     public void testExceptAs() {
         MonadTestException someException = null;
         try {
-            Monad.of(null, Integer.class).exceptAs(e -> new MonadTestException()).get();
+            Monad.of(null).orElseThrow(e -> new MonadTestException());
         } catch (MonadTestException e) {
             someException = e;
         }
@@ -54,14 +57,14 @@ public class MonadTest {
 
     @Test
     public void testMapFailed() {
-        assert !Monad.of(null, Integer.class).map(i -> i + 1).isPresent();
+        assert !Monad.<Integer>of(null).map(i -> i + 1).isPresent();
         assert !Monad.of(1).map(i -> i / 0).isPresent();
     }
 
     @Test
     public void testIfPresentSuccess() {
         boolean[] booleans = new boolean[1];
-        assert Monad.of(1).ifPresent((i) -> {
+        assert Monad.of(1).peek((i) -> {
             booleans[0] = true;
         }).isPresent();
         assert booleans[0];
@@ -69,31 +72,23 @@ public class MonadTest {
 
     @Test
     public void testIfPresentFailed() {
-        assert !Monad.of(null, Integer.class).ifPresent(x -> {}).isPresent();
-        assert !Monad.of(1).ifPresent((i) -> {
+        assert !Monad.<Integer>of(null).peek(x -> {
+        }).isPresent();
+        assert !Monad.of(1).peek((i) -> {
             throw new Exception("xxx");
         }).isPresent();
     }
 
-    @Test
-    public void testCompose() throws Exception {
-        assert Monad.of(1)
-                .compose(Monad.of(2), Integer::sum).get() == 3;
-        assert !Monad.of(null, Integer.class)
-                .compose(Monad.of(2), Integer::sum).isPresent();
-        assert !Monad.of(1).compose(Monad.of(null), Integer::sum).isPresent();
-        assert !Monad.of(1).compose(Monad.of(0), Integer::divideUnsigned).isPresent();
-    }
 
     @Test
     public void testFlatMapSuccess() throws Throwable {
-        Monad<Boolean, Exception> success = Monad.of(true);
+        Monad<Boolean> success = Monad.of(true);
         assert Monad.of(1).flatMap(i -> success).get();
     }
 
     @Test
     public void testFlatMapFailed() {
-        Monad<Boolean, Exception> success = Monad.of(true);
+        Monad<Boolean> success = Monad.of(true);
         assert !Monad.of(null).flatMap(i -> success).isPresent();
         assert !Monad.of(1).flatMap(i -> {
             int j = i / 0;
@@ -113,27 +108,38 @@ public class MonadTest {
     @Test
     public void testCleanUpOnFailed() {
         boolean[] booleans = new boolean[1];
-        Monad.of(null).onClean((o) -> {
-            booleans[0] = true;
-        }).cleanUp();
+        Monad.of(new Closeable() {
+            @Override
+            public void close() throws IOException {
+                booleans[0] = true;
+            }
+        }).orElse(null);
         assert booleans[0];
     }
 
     @Test
     public void testCleanUpOnSuccess() {
         boolean[] booleans = new boolean[1];
-        Monad.of(1).onClean((o) -> {
-            booleans[0] = true;
-        }).cleanUp();
+        Monad.of(new Closeable() {
+            @Override
+            public void close() throws IOException {
+                booleans[0] = true;
+            }
+        }).map(z -> 1).orElse(0);
         assert booleans[0];
     }
 
     @Test
     public void testCleanUpOnlyOnce() {
         int[] numbers = new int[1];
-        Monad.of(1)
-                .onClean((o) -> numbers[0]++)
-                .cleanUp().cleanUp();
+        Monad<Closeable> monad = Monad.of(new Closeable() {
+            @Override
+            public void close() throws IOException {
+                numbers[0]++;
+            }
+        });
+        monad.get();
+        monad.get()
         ;
         assert numbers[0] == 1;
     }
@@ -141,10 +147,18 @@ public class MonadTest {
     @Test
     public void testCleanUpAfterFlatMap() {
         boolean[] booleans = new boolean[2];
-        Monad.of(1)
-                .onClean((o) -> booleans[0] = true)
-                .flatMap(i -> Monad.of(null).onClean((o) -> booleans[1] = true))
-                .cleanUp();
+        Monad.of(new Closeable() {
+            @Override
+            public void close() throws IOException {
+                booleans[0] = true;
+            }
+        }).flatMap(i -> Monad.of(new Closeable() {
+                    @Override
+                    public void close() throws IOException {
+                        booleans[1] = true;
+                    }
+                }))
+                .orElse(null);
         assert booleans[0];
         assert booleans[1];
     }
@@ -152,19 +166,26 @@ public class MonadTest {
     @Test
     public void testNotCleanUpWhenFlatMapFailed() {
         boolean[] booleans = new boolean[2];
-        Monad.of(null)
-                .onClean((o) -> booleans[0] = true)
-                .flatMap(i -> Monad.of(true).onClean((o) -> booleans[1] = true))
-                .cleanUp();
+        Monad.of(new Closeable() {
+            @Override
+            public void close() throws IOException {
+                booleans[0] = true;
+            }
+        }).map(x -> null).flatMap(i -> Monad.of(new Closeable() {
+            @Override
+            public void close() throws IOException {
+                booleans[1] = true;
+            }
+        })).orElse(null);
         assert booleans[0];
         assert !booleans[1];
     }
 
     @Test
     public void testOrElseOf() throws Exception {
-        assert Monad.of(null, Integer.class)
-                .orElseOf(100).get() == 100;
-        assert Monad.of(1).orElseOf(1000).get() == 1;
+        assert Monad.<Integer>of(null)
+                .orElse(100) == 100;
+        assert Monad.<Integer>of(1).orElse(1000) == 1;
     }
 
     @Test
@@ -194,10 +215,10 @@ public class MonadTest {
     @Test
     public void testGet() throws Exception {
         assert Monad.of(1).get() == 1;
-        assert Monad.of(1).get(e -> e) == 1;
+        assert Monad.of(1).orElseThrow(e -> e) == 1;
         Exception[] exceptions = new Exception[1];
         try {
-            Monad.of(null).get((e) -> new RuntimeException());
+            Monad.of(null).orElseThrow((e) -> new RuntimeException());
         } catch (Exception e) {
             assert e instanceof RuntimeException;
             exceptions[0] = e;
@@ -207,10 +228,10 @@ public class MonadTest {
 
     @Test
     public void testOrElseThrow() throws Exception {
-        Monad.of(1).orElseThrow(new Exception());
+        Monad.of(1).orElseThrow(e -> new Exception());
         Exception[] exceptions = new Exception[1];
         try {
-            Monad.of(null).orElseThrow(new RuntimeException());
+            Monad.of(null).orElseThrow(e -> new RuntimeException());
         } catch (Exception e) {
             assert e instanceof RuntimeException;
             exceptions[0] = e;
@@ -226,16 +247,13 @@ public class MonadTest {
     @Test
     public void testFilterFailed() {
         assert !Monad.of(0).filter(x -> x > 0).isPresent();
-        assert !Monad.of(null, Integer.class).filter(x -> x > 0).isPresent();
+        assert !Monad.<Integer>of(null).filter(x -> x > 0).isPresent();
     }
 
     @Test
-    public void testOrElse() throws Exception{
-        boolean[] booleans = new boolean[1];
-        assert Monad.of(null, Integer.class)
-                .orElse(Monad.of(1)).get() == 1;
-        assert Monad.of(1).orElse(Monad.of(1).onClean(x -> booleans[0] = true)).get() == 1;
-        assert booleans[0];
+    public void testOrElse() throws Exception {
+        assert Monad.<Integer>of(0)
+                .flatMap(x -> Monad.of(1)).get() == 1;
     }
 
 }
